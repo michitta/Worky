@@ -26,7 +26,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - run: npm i yarn -g
+    - run: npm i yarn
     - run: yarn
-    - run: npm i ts-node -g
+    - run: npm i ts-node
     - run: ts-node index.ts
