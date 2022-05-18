@@ -121,84 +121,113 @@ bot.hears(experience, async ctx =>{
 
 // Последний запрос ответа
 bot.hears(answers, async ctx =>{
-    let linkapi = "https://api.hh.ru/vacancies?";
+
+    // Поиск пользователя в базе данных
     let college = await College.findOne({ where: {userID: ctx.message.chat.id.toString()} })
+
+    // Запись последнего ответа в базу данных
     college.exp = ctx.message.text; await college.save();
-    if (college.proffesion.concat("Программист")){
-        linkapi += `text=%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%81%D1%82%20`
-    }
+
+    // Более правильный способ запроса в отличии от старой версии
+
+    let text = "";
+    let schedule = "";
+    let employment = "";
+    let experience = "";
+
+    // Выбор профессии
+    if (college.proffesion.concat("Программист")) text = "Программист";
+
+    // Выбор языка
     switch (college.launguage){
         case "C":
-            linkapi += `C`
+            text += ` C`
             break;
         case "C#":
-            linkapi += `C#`
+            text += ` C#`
             break;
         case "C++":
-            linkapi += `C++`
+            text += ` C++`
             break;
         case "Java":
-            linkapi += `Java"`
+            text += ` Java"`
             break;
         case "1C":
-            linkapi += `1C"`
+            text += ` 1C"`
             break;
         case "SQL":
-            linkapi += `SQL"`
+            text += ` SQL"`
             break;
         case "Python":
-            linkapi += `Python"`
+            text += ` Python"`
             break;
     }
+
+    // График работ
     switch (college.grafRabot){
         case "Полный день":
-            linkapi += `&schedule=fullDay`
+            schedule += `fullDay`
             break;
         case "Сменный график":
-            linkapi += `&schedule=shift`
+            schedule += `shift`
             break;
         case "Удалённая работа":
-            linkapi += `&schedule=remote`
+            schedule += `remote`
             break;
         case "Гибкий график":
-            linkapi += `&schedule=flexible`
+            schedule += `flexible`
             break;
     }
+
+    // Выбор занятости
     switch (college.typeZanatosti){
         case "Полная занятость":
-            linkapi += `&employment=full`
+            employment += `full`
             break;
         case "Частичная занятость":
-            linkapi += `&employment=part`
+            employment += `part`
             break;
         case "Стажировка":
-            linkapi += `&employment=probation`
+            employment += `probation`
             break;
         case "Проектная работа":
-            linkapi += `&employment=project`
+            employment += `project`
             break;
     }
+
+    // Выбор опыта работы
     switch (college.exp){
         case "Нет опыта":
-            linkapi += `&experience=noExperience`
+            experience += `noExperience`
             break;
         case "От 1-3 лет":
-            linkapi += `&experience=between1And3`
+            experience += `between1And3`
             break;
         case "От 3-6 лет":
-            linkapi += `&experience=between3And6`
+            experience += `between3And6`
             break;
         case "Больше 6 лет":
-            linkapi += `&experience=moreThan6`
+            experience += `moreThan6`
             break;
     }
-    linkapi += "&per_page=10"
-    axios.get(linkapi).then(result => {
-        console.log(result.data.items)
-        for (let item of result.data.items){
-            ctx.reply(`${item.alternate_url}`)
+
+    // Запрос из базы данных
+    axios({
+        method: 'get',
+        url: 'https://api.hh.ru/vacancies',
+        params: {
+            text: text,
+            schedule: schedule,
+            employment: employment,
+            experience: experience,
+            per_page: '10'
         }
-    })
+    }).then(x => {
+        for (let item of x.data.items){
+            ctx.reply("Отправляю Вам подходящие вакансии")
+            ctx.reply(item.name + "\n" + item.alternate_url)
+        }
+    });
 })
 
 // Импорт модуля
